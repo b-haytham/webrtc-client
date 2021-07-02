@@ -8,7 +8,6 @@ import { CacheProvider } from "@emotion/react";
 import createCache from "@emotion/cache";
 import theme from "../src/theme";
 
-import { ContextProvider } from "../src/Context";
 
 const cache = createCache({ key: "css", prepend: true });
 cache.compat = true;
