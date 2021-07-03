@@ -18,9 +18,12 @@
     "@types/simple-peer": "^9.11.0",
     "add": "^2.0.6",
     "next": "11.0.1",
+    "re-resizable": "^6.9.0",
     "react": "17.0.2",
+    "react-blur": "^0.6.0",
     "react-copy-to-clipboard": "^5.0.3",
     "react-dom": "17.0.2",
+    "react-draggable": "^4.4.3",
     "simple-peer": "9.6.2",
     "socket.io-client": "^2.4.0",
     "yarn": "^1.22.10"

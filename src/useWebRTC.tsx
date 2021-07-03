@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 
-import io from 'socket.io-client'
+import io from "socket.io-client";
 
-import Peer from 'simple-peer'
+import Peer from "simple-peer";
+import { createRef } from "react";
 
 function ab2str(buf) {
-   // return String.fromCharCode.apply(null, new Uint8Array(buf));
-    return new TextDecoder().decode(buf)
+    // return String.fromCharCode.apply(null, new Uint8Array(buf));
+    return new TextDecoder().decode(buf);
 }
-  
 
 export const useWebRTC = () => {
+    const [showChat, setShowChat] = useState(false);
     const [name, setName] = useState("");
     const [me, setMe] = useState("");
     const [stream, setStream] = useState<MediaStream>();
@@ -19,16 +20,22 @@ export const useWebRTC = () => {
     const [callerSignal, setCallerSignal] = useState();
     const [callAccepted, setCallAccepted] = useState(false);
 
+    const [messages, setMessages] = useState([]);
+
     const socket = useRef<any>();
     const myVideo = useRef<HTMLVideoElement>();
     const userVideo = useRef<HTMLVideoElement>();
 
-    const callerPeer  = useRef<Peer.Instance>()
-    const answerPeer  = useRef<Peer.Instance>()
+    const callerPeer = useRef<Peer.Instance>();
+    const answerPeer = useRef<Peer.Instance>();
+
+    const renderCount = useRef(0);
 
     useEffect(() => {
+        renderCount.current += 1;
+        console.log(renderCount.current);
         socket.current = io("http://localhost:3000");
-        window.navigator.mediaDevices
+        navigator.mediaDevices
             .getUserMedia({ video: true, audio: true })
             .then((stream) => {
                 setStream(stream);
@@ -79,10 +86,18 @@ export const useWebRTC = () => {
         });
 
         callerPeer.current.on("stream", (stream) => {
-            userVideo.current.srcObject = stream;
+            if (userVideo.current) {
+                userVideo.current.srcObject = stream;
+            }
         });
 
-        callerPeer.current.on('data', m => console.log('caller get message >>', ab2str(m)))
+        callerPeer.current.on("data", (m) => {
+            console.log("caller get message >>", ab2str(m));
+            setMessages((prev) => [
+                ...prev,
+                { position: "right", text: ab2str(m) },
+            ]);
+        });
 
         socket.current.on("call.accepted", ({ signal }) => {
             setCallAccepted(true);
@@ -105,22 +120,53 @@ export const useWebRTC = () => {
         });
 
         answerPeer.current.on("stream", (stream) => {
-            userVideo.current.srcObject = stream;
+            if (userVideo.current) {
+                userVideo.current.srcObject = stream;
+            }
         });
 
-        answerPeer.current.on('data', m => console.log('answer got message >> ', ab2str(m)))
+        answerPeer.current.on("data", (m) => {
+            console.log("answer got message >> ", ab2str(m));
+            setMessages((prev) => [
+                ...prev,
+                { position: "right", text: ab2str(m) },
+            ]);
+        });
 
         answerPeer.current.signal(callerSignal);
     }
 
     function sendMessage(message: string) {
-        if(receivingCall) {
-            answerPeer.current.send(message)
-        }else {
-            callerPeer.current.send(message)
+        if (receivingCall) {
+            answerPeer.current.send(message);
+            setMessages((prev) => [
+                ...prev,
+                { position: "left", text: message },
+            ]);
+        } else {
+            callerPeer.current.send(message);
+            setMessages((prev) => [
+                ...prev,
+                { position: "left", text: message },
+            ]);
         }
     }
 
-    return { me, stream, callPeer, acceptCall, receivingCall, callAccepted, myVideo, userVideo, name, setName, caller, callerSignal, sendMessage }
-
-}
+    return {
+        me,
+        stream,
+        callPeer,
+        acceptCall,
+        receivingCall,
+        callAccepted,
+        myVideo,
+        userVideo,
+        name,
+        setName,
+        caller,
+        callerSignal,
+        sendMessage,
+        showChat,
+        messages,
+    };
+};
