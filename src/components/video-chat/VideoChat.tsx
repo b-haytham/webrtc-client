@@ -38,14 +38,15 @@ const VideoChat: React.FC<VideoChatProps> = ({
                     "repeating-radial-gradient( circle at 0 0, transparent 0, #ffffff 7px ), repeating-linear-gradient( #00b8fa55, #00b8fa )",
             }}
         >
-            <Box>
+            <Box sx={{width: '100%', height: '100%', overflow:'hidden'}}>
                 {callAccepted && stream && (
                     <video
                         ref={userVideoRef}
                         playsInline
                         autoPlay
+                        style={{width :'100%', height: '100%'}}
                         width={window.innerWidth}
-                        height={window.innerHeight - 100}
+                        height={window.innerHeight}
                     />
                 )}
             </Box>

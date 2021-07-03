@@ -44,6 +44,7 @@ export default function Home() {
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
+                    
                 }}
             >
                 <Paper
@@ -51,7 +52,7 @@ export default function Home() {
                     elevation={5}
                 >
                     <Grid container spacing={2}>
-                        <Grid item xs={12} md={4}>
+                        <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
                                 value={name}
@@ -69,7 +70,7 @@ export default function Home() {
                                 />
                             </CopyToClipboard>
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
                                 value={idToCall}
@@ -87,24 +88,7 @@ export default function Home() {
                                 }}
                             />
                         </Grid>
-                        <Grid item xs={12} md={4}>
-                            <TextField
-                                fullWidth
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                                label="Message"
-                                variant="outlined"
-                                helperText="send message"
-                            />
-
-                            <Button
-                                title="Send"
-                                right_icon={<CallIcon sx={{ ml: 2 }} />}
-                                onClick={() => {
-                                    sendMessage(message);
-                                }}
-                            />
-                        </Grid>
+                        
                     </Grid>
                     {receivingCall && caller && !callAccepted && (
                         <>

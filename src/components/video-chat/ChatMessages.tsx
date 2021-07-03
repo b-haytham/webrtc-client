@@ -72,6 +72,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                             <TextField
                                 fullWidth
                                 value={message}
+                                onKeyUp={(e) => {
+                                    if(e.keyCode === 13 && message !== '') {
+                                        sendMessage(message);
+                                        setMessage('')
+                                    }
+                                }}
                                 onChange={(e) => setMessage(e.target.value)}
                             />
                         </Box>

@@ -23,9 +23,11 @@ const Message: React.FC<MessageProps> = ({ message }) => {
                     px: 2,
                     py:1,
                     borderRadius: 20,
+                    display: 'flex',
+                    flexWrap: 'wrap'
                 }}
             >
-                <Typography sx={{width: '100%'}} color='#fff'>{message.text}</Typography>
+                <Typography sx={{wordWrap: 'break-word'}} color='#fff'>{message.text}</Typography>
             </Box>
         </Box>
     );
