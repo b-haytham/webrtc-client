@@ -1,10 +1,10 @@
-import { Box } from "@material-ui/core";
 import React, { MutableRefObject } from "react";
-import { Ref } from "react";
+
+import { Box, Fab } from "@material-ui/core";
+
 import ChatMessages from "./ChatMessages";
 import MyVideo from "./MyVideo";
-
-import { Resizable } from "re-resizable";
+import PhoneDisabledIcon from "@material-ui/icons/PhoneDisabled";
 
 interface VideoChatProps {
     stream: MediaStream;
@@ -13,6 +13,7 @@ interface VideoChatProps {
     userVideoRef: MutableRefObject<HTMLVideoElement>;
     messages: object[];
     sendMessage(message: string): void;
+    onEndCall(): void;
 }
 
 const VideoChat: React.FC<VideoChatProps> = ({
@@ -22,6 +23,7 @@ const VideoChat: React.FC<VideoChatProps> = ({
     userVideoRef,
     messages,
     sendMessage,
+    onEndCall,
 }) => {
     return (
         <Box
@@ -38,19 +40,30 @@ const VideoChat: React.FC<VideoChatProps> = ({
                     "repeating-radial-gradient( circle at 0 0, transparent 0, #ffffff 7px ), repeating-linear-gradient( #00b8fa55, #00b8fa )",
             }}
         >
-            <Box sx={{width: '100%', height: '100%', overflow:'hidden'}}>
+            <Box sx={{ width: "100%", height: "100%", overflow: "hidden" }}>
                 {callAccepted && stream && (
                     <video
                         ref={userVideoRef}
                         playsInline
                         autoPlay
-                        style={{width :'100%', height: '100%'}}
+                        style={{ width: "100%", height: "100%" }}
                         // width={window.innerWidth}
                         // height={window.innerHeight}
                     />
                 )}
             </Box>
-
+            <Box sx={{ position: "absolute", bottom: 50, right: 50 }}>
+                <Fab
+                    sx={{
+                        bgcolor: "red",
+                        ":hover": { bgcolor: "red", opacity: 0.7 },
+                    }}
+                    aria-label="add"
+                    onClick={onEndCall}
+                >
+                    <PhoneDisabledIcon sx={{ color: "#fff" }} />
+                </Fab>
+            </Box>
             <ChatMessages messages={messages} sendMessage={sendMessage} />
             <MyVideo stream={stream} myVideoRef={myVideoRef} />
         </Box>

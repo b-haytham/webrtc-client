@@ -16,14 +16,8 @@ import {
 import PhoneIcon from "@material-ui/icons/Phone";
 import PhoneDisabledIcon from "@material-ui/icons/PhoneDisabled";
 
-const Transition = React.forwardRef(function Transition(
-    props: TransitionProps & {
-        children?: React.ReactElement<any, any>;
-    },
-    ref: React.Ref<unknown>
-) {
-    return <Slide direction="up" ref={ref} {...props} />;
-});
+import SlideTransition from "./SlideTransitionComp";
+
 
 interface AcceptCallDialogProps {
     open: boolean;
@@ -43,7 +37,7 @@ const AcceptCallDialog: React.FC<AcceptCallDialogProps> = ({
     return (
         <Dialog
             open={open}
-            TransitionComponent={Transition}
+            TransitionComponent={SlideTransition}
             keepMounted
             onClose={handleClose}
             aria-describedby="alert-dialog-slide-description"

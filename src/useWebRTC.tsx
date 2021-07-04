@@ -4,6 +4,7 @@ import io from "socket.io-client";
 
 import Peer from "simple-peer";
 import { createRef } from "react";
+import { useRouter } from "next/dist/client/router";
 
 function ab2str(buf) {
     // return String.fromCharCode.apply(null, new Uint8Array(buf));
@@ -11,15 +12,18 @@ function ab2str(buf) {
 }
 
 export const useWebRTC = () => {
-    const [showChat, setShowChat] = useState(false);
+    const router = useRouter();
     const [name, setName] = useState("");
     const [me, setMe] = useState("");
     const [stream, setStream] = useState<MediaStream>();
     const [receivingCall, setReceivingCall] = useState(false);
-    const [callReciever, setCallReciever] = useState(false) 
+    const [calling, setCalling] = useState(false);
+    const [callReciever, setCallReciever] = useState(false);
     const [caller, setCaller] = useState(null);
-    const [callerSignal, setCallerSignal] = useState();
+    const [callerSignal, setCallerSignal] = useState(null);
     const [callAccepted, setCallAccepted] = useState(false);
+
+    const [callCancelled, setCallCancelled] = useState(false);
 
     const [messages, setMessages] = useState([]);
 
@@ -30,36 +34,38 @@ export const useWebRTC = () => {
     const callerPeer = useRef<Peer.Instance>();
     const answerPeer = useRef<Peer.Instance>();
 
-    const messageSound = useRef<HTMLAudioElement>(null)
-    const callSound = useRef<HTMLAudioElement>(null)
-    const recieveCallSound = useRef<HTMLAudioElement>(null)
+    const messageSound = useRef<HTMLAudioElement>(null);
+    const callSound = useRef<HTMLAudioElement>(null);
+    const recieveCallSound = useRef<HTMLAudioElement>(null);
 
     useEffect(() => {
-        messageSound.current = new Audio('/message.wav')
-        callSound.current = new Audio('/make-call.wav')
-        recieveCallSound.current = new Audio('/recieving-call.wav')
-    }, [])
+        messageSound.current = new Audio("/message.wav");
+        callSound.current = new Audio("/make-call.wav");
+        recieveCallSound.current = new Audio("/recieving-call.wav");
+    }, []);
 
     useEffect(() => {
-        if(callAccepted && recieveCallSound.current) {
-            recieveCallSound.current.pause()
+        if (callAccepted && recieveCallSound.current) {
+            recieveCallSound.current.pause();
         }
-        if(callAccepted && callSound.current) {
-            callSound.current.pause()
+        if (callAccepted && callSound.current) {
+            callSound.current.pause();
         }
-    }, [callAccepted])
+    }, [callAccepted]);
 
     useEffect(() => {
-
         socket.current = io("http://192.168.1.17:3000");
         navigator.mediaDevices
-            .getUserMedia({ video:{
-                width: { min: 640, ideal: 1920, max: 1920 },
-                height: { min: 400, ideal: 1080 },
-                aspectRatio: 1.777777778,
-                frameRate: { max: 30 },
-                facingMode: "user" 
-              }, audio: true })
+            .getUserMedia({
+                video: {
+                    width: { min: 640, ideal: 1920, max: 1920 },
+                    height: { min: 400, ideal: 1080 },
+                    aspectRatio: 1.777777778,
+                    frameRate: { max: 30 },
+                    facingMode: "user",
+                },
+                audio: true,
+            })
             .then((stream) => {
                 setStream(stream);
                 if (myVideo.current) {
@@ -72,19 +78,41 @@ export const useWebRTC = () => {
         });
 
         socket.current.on("user.calling", (data) => {
+            if (callCancelled) {
+                setCallCancelled(false);
+                return;
+            }
             setReceivingCall(true);
-            setCallReciever(true)
+            setCallReciever(true);
             setCaller(data.from);
             setCallerSignal(data.signal);
-            if(recieveCallSound.current) {
-                recieveCallSound.current.play()
+            if (recieveCallSound.current) {
+                recieveCallSound.current.loop = true;
+                recieveCallSound.current.play();
             }
+        });
+
+        socket.current.on("call.cancelled", () => {
+            setReceivingCall(false);
+            setCallReciever(false);
+            setCaller(null);
+            setCallerSignal(null);
+            setCallCancelled(true);
+            if (recieveCallSound.current) {
+                recieveCallSound.current.pause();
+            }
+        });
+
+        socket.current.on("call.ended", () => {
+            router.reload();
         });
     }, []);
 
     function callPeer(id: string) {
-        if(callSound.current) {
-            callSound.current.play()
+        setCalling(true);
+        if (callSound.current) {
+            callSound.current.loop = true;
+            callSound.current.play();
         }
         callerPeer.current = new Peer({
             initiator: true,
@@ -126,27 +154,38 @@ export const useWebRTC = () => {
                 ...prev,
                 { position: "right", text: ab2str(m) },
             ]);
-            if(messageSound.current) {
-                messageSound.current.play()
+            if (messageSound.current) {
+                messageSound.current.play();
             }
         });
 
         socket.current.on("call.accepted", ({ signal }) => {
             setCallAccepted(true);
+            setCalling(false);
             callerPeer.current.signal(signal);
+        });
+
+        socket.current.on("call.rejected", ({ from }) => {
+            setCalling(false);
+            if (callSound.current) {
+                callSound.current.pause();
+            }
+            if (callerPeer.current) {
+                callerPeer.current.destroy();
+            }
+            router.reload();
         });
     }
 
     function acceptCall() {
         setCallAccepted(true);
-        setReceivingCall(false)
+        setReceivingCall(false);
         answerPeer.current = new Peer({
             initiator: false,
             trickle: false,
             stream: stream,
         });
         answerPeer.current.on("signal", (data) => {
-            console.log(caller)
             socket.current.emit("answer.call", {
                 signal: data,
                 to: caller.socket_id.toString(),
@@ -165,20 +204,47 @@ export const useWebRTC = () => {
                 ...prev,
                 { position: "right", text: ab2str(m) },
             ]);
-            if(messageSound.current) {
-                messageSound.current.play()
+            if (messageSound.current) {
+                messageSound.current.play();
             }
         });
 
         answerPeer.current.signal(callerSignal);
     }
 
-
-    function rejectCall() {
-        socket.current.emit('reject.call', {
+    async function rejectCall() {
+        await socket.current.emit("reject.call", {
             from: me,
-            to: caller.socket_id
-        })
+            to: caller.socket_id,
+        });
+        setReceivingCall(false);
+        setCallReciever(false);
+        setCaller(null);
+        setCallerSignal(null);
+        if (recieveCallSound.current) {
+            recieveCallSound.current.pause();
+        }
+    }
+
+    async function cancelCall(id: string) {
+        setCalling(false);
+        if (callSound.current) {
+            callSound.current.pause();
+        }
+        await socket.current.emit("cancel.call", {
+            from: me,
+            to: id,
+        });
+        callerPeer.current.destroy();
+        router.reload();
+    }
+
+    async function endCall(id?: string) {
+        await socket.current.emit("end.call", {
+            from: me,
+            to: callReciever ? caller.socket_id : id,
+        });
+        router.reload();
     }
 
     function sendMessage(message: string) {
@@ -211,8 +277,10 @@ export const useWebRTC = () => {
         caller,
         callerSignal,
         sendMessage,
-        showChat,
         messages,
-        rejectCall
+        rejectCall,
+        calling,
+        cancelCall,
+        endCall,
     };
 };

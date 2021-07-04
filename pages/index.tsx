@@ -1,20 +1,26 @@
 import React, { useEffect, useState } from "react";
 
-import { makeStyles } from "@material-ui/styles";
-import { Paper, TextField, Typography, Grid, Box } from "@material-ui/core";
+import {
+    Paper,
+    TextField,
+    Grid,
+    Box,
+    Fab,
+} from "@material-ui/core";
 import { CopyToClipboard } from "react-copy-to-clipboard";
-import Button from "../src/components/Button";
 
 import AssignmentIcon from "@material-ui/icons/Assignment";
 import CallIcon from "@material-ui/icons/Call";
 import VideoChat from "../src/components/video-chat/VideoChat";
 import { useWebRTC } from "../src/useWebRTC";
 import AcceptCallDialog from "../src/components/AcceptCallDialog";
+import CallingDialog from "../src/components/CallingDialog";
 
 export default function Home() {
     const [idToCall, setIdToCall] = useState("");
-    const [message, setMessage] = useState("");
-    const [open, setOpen] = useState(false)
+
+    const [openAcceptDialog, setOpenAccepDialog] = useState(false);
+    const [openCallingDialog, setOpenCallingDialog] = useState(false);
     const {
         name,
         setName,
@@ -29,15 +35,27 @@ export default function Home() {
         caller,
         sendMessage,
         messages,
-        rejectCall
+        rejectCall,
+        calling,
+        cancelCall,
+        endCall,
     } = useWebRTC();
 
+    useEffect(() => {
+        if (receivingCall) {
+            setOpenAccepDialog(true);
+        } else {
+            setOpenAccepDialog(false);
+        }
+    }, [receivingCall]);
 
     useEffect(() => {
-        if(receivingCall) {
-            setOpen(true)
+        if (calling) {
+            setOpenCallingDialog(true);
+        } else {
+            setOpenCallingDialog(false);
         }
-    }, [receivingCall])
+    }, [calling]);
 
     return (
         <Box
@@ -54,7 +72,7 @@ export default function Home() {
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
-                    minHeight: '100vh'
+                    minHeight: "100vh",
                 }}
             >
                 <Paper
@@ -72,12 +90,18 @@ export default function Home() {
                                 helperText="Set your name"
                             />
                             <CopyToClipboard text={me || " "}>
-                                <Button
-                                    title={me !== '' ? `Your ID is ${me}` : "Copy Your ID"}
-                                    right_icon={
-                                        <AssignmentIcon sx={{ ml: 2 }} />
-                                    }
-                                />
+                                <Fab
+                                    variant="extended"
+                                    size="medium"
+                                    color="primary"
+                                    aria-label="add"
+                                    sx={{ color: "#fff", mt: 2 }}
+                                >
+                                    {me !== ""
+                                        ? `Your ID is ${me}`
+                                        : "Copy Your ID"}
+                                    <AssignmentIcon sx={{ ml: 2 }} />
+                                </Fab>                                
                             </CopyToClipboard>
                         </Grid>
                         <Grid item xs={12} md={6}>
@@ -90,29 +114,41 @@ export default function Home() {
                                 helperText="Enter user ID To call"
                             />
 
-                            <Button
-                                title="Call"
-                                right_icon={<CallIcon sx={{ ml: 2 }} />}
+                            <Fab
+                                variant="extended"
+                                size="medium"
+                                color="primary"
+                                aria-label="add"
+                                sx={{ color: "#fff", mt: 2 }}
                                 onClick={() => {
                                     callPeer(idToCall);
                                 }}
-                            />
+                            >
+                                Call
+                                <CallIcon sx={{ ml: 2 }} />
+                            </Fab>
                         </Grid>
-                        
                     </Grid>
-                    <AcceptCallDialog
-                        open={open}
-                        handleClose={() => setOpen(false)}
-                        onAccept={() =>{ 
-                            acceptCall()
-                            setOpen(false)
+                    
+                </Paper>
+                <AcceptCallDialog
+                        open={openAcceptDialog}
+                        caller={caller}
+                        handleClose={() => setOpenAccepDialog(false)}
+                        onAccept={() => {
+                            setOpenAccepDialog(false);
+                            acceptCall();
                         }}
-                        onReject={() => {
-                            rejectCall()
-                            setOpen(false)
+                        onReject={async () => {
+                            setOpenAccepDialog(false);
+                            await rejectCall();
                         }}
                     />
-                </Paper>
+                    <CallingDialog
+                        open={openCallingDialog}
+                        handleClose={() => setOpenCallingDialog(false)}
+                        onCancel={() => cancelCall(idToCall)}
+                    />
             </Box>
 
             <VideoChat
@@ -122,6 +158,7 @@ export default function Home() {
                 callAccepted={callAccepted}
                 messages={messages}
                 sendMessage={sendMessage}
+                onEndCall={() => endCall(idToCall)}
             />
         </Box>
     );
