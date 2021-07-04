@@ -1,10 +1,11 @@
 import React, { MutableRefObject } from "react";
 
-import { Box, Fab } from "@material-ui/core";
+import { Box, Fab, useMediaQuery } from "@material-ui/core";
 
 import ChatMessages from "./ChatMessages";
 import MyVideo from "./MyVideo";
 import PhoneDisabledIcon from "@material-ui/icons/PhoneDisabled";
+import { MyTheme } from "../../theme";
 
 interface VideoChatProps {
     stream: MediaStream;
@@ -25,6 +26,19 @@ const VideoChat: React.FC<VideoChatProps> = ({
     sendMessage,
     onEndCall,
 }) => {
+    const mobile = useMediaQuery((theme: MyTheme) => theme.breakpoints.down('sm'))
+    
+    const endButtonRightPosition = () => {
+        if(!mobile) return 50
+        
+        if(typeof window === 'undefined') {
+            return 50 
+        }else {
+            return window.innerWidth / 2 - 30
+        }
+    }
+ 
+   
     return (
         <Box
             sx={{
@@ -36,8 +50,8 @@ const VideoChat: React.FC<VideoChatProps> = ({
                 opacity: callAccepted ? 1 : 0,
                 backgroundColor: "#fff",
                 zIndex: callAccepted ? 1 : -1,
-                backgroundImage:
-                    "repeating-radial-gradient( circle at 0 0, transparent 0, #ffffff 7px ), repeating-linear-gradient( #00b8fa55, #00b8fa )",
+                // backgroundImage:
+                //     "repeating-radial-gradient( circle at 0 0, transparent 0, #ffffff 7px ), repeating-linear-gradient( #00b8fa55, #00b8fa )",
             }}
         >
             <Box sx={{ width: "100%", height: "100%", overflow: "hidden" }}>
@@ -46,13 +60,14 @@ const VideoChat: React.FC<VideoChatProps> = ({
                         ref={userVideoRef}
                         playsInline
                         autoPlay
-                        style={{ width: "100%", height: "100%" }}
-                        // width={window.innerWidth}
-                        // height={window.innerHeight}
+                        
+                        //style={{ width: "100%", height: "100%" }}
+                        width={window.innerWidth}
+                         //height={window.innerHeight}
                     />
                 )}
             </Box>
-            <Box sx={{ position: "absolute", bottom: 50, right: 50 }}>
+            <Box sx={{ position: "absolute", bottom: 60, right: endButtonRightPosition() }}>
                 <Fab
                     sx={{
                         bgcolor: "red",
@@ -64,7 +79,9 @@ const VideoChat: React.FC<VideoChatProps> = ({
                     <PhoneDisabledIcon sx={{ color: "#fff" }} />
                 </Fab>
             </Box>
-            <ChatMessages messages={messages} sendMessage={sendMessage} />
+            
+            {!mobile && <ChatMessages messages={messages} sendMessage={sendMessage} />}
+                       
             <MyVideo stream={stream} myVideoRef={myVideoRef} />
         </Box>
     );

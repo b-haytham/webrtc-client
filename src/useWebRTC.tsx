@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 
 import io from "socket.io-client";
-
 import Peer from "simple-peer";
-import { createRef } from "react";
+
 import { useRouter } from "next/dist/client/router";
+import { useMediaQuery } from "@material-ui/core";
+import { MyTheme } from "./theme";
 
 function ab2str(buf) {
     // return String.fromCharCode.apply(null, new Uint8Array(buf));
@@ -22,6 +23,9 @@ export const useWebRTC = () => {
     const [caller, setCaller] = useState(null);
     const [callerSignal, setCallerSignal] = useState(null);
     const [callAccepted, setCallAccepted] = useState(false);
+
+    const mobile = useMediaQuery((theme: MyTheme) => theme.breakpoints.down('sm'))
+   
 
     const [callCancelled, setCallCancelled] = useState(false);
 
@@ -61,9 +65,11 @@ export const useWebRTC = () => {
                     width: { min: 640, ideal: 1920, max: 1920 },
                     height: { min: 400, ideal: 1080 },
                     aspectRatio: 1.777777778,
+                    //aspectRatio: 1.777777778,
                     frameRate: { max: 30 },
                     facingMode: "user",
                 },
+                //video: false,
                 audio: true,
             })
             .then((stream) => {
@@ -106,7 +112,7 @@ export const useWebRTC = () => {
         socket.current.on("call.ended", () => {
             router.reload();
         });
-    }, []);
+    }, [mobile]);
 
     function callPeer(id: string) {
         setCalling(true);
@@ -248,6 +254,7 @@ export const useWebRTC = () => {
     }
 
     function sendMessage(message: string) {
+        if(message === '') return
         if (callReciever) {
             answerPeer.current.send(message);
             setMessages((prev) => [

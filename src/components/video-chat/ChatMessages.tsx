@@ -57,8 +57,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                     </Box>
                     <Divider />
                     <Box sx={{ flexGrow: 1, overflowY: "scroll" }}>
-                        {messages.map((m) => (
-                            <Message message={m} />
+                        {messages.map((m,i) => (
+                            <Message  key={i} message={m} />
                         ))}
                     </Box>
                     <Divider />

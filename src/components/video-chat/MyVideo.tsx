@@ -5,6 +5,9 @@ import { Box } from "@material-ui/core";
 import Draggable from "react-draggable";
 import { Resizable } from "re-resizable";
 import { MutableRefObject } from "react";
+import { useMediaQuery } from "@material-ui/core";
+import { useTheme } from "@material-ui/styles";
+import { MyTheme } from "../../theme";
 
 interface MyVideoProps {
     myVideoRef: MutableRefObject<HTMLVideoElement>;
@@ -13,12 +16,27 @@ interface MyVideoProps {
 
 const MyVideo: React.FC<MyVideoProps> = ({ myVideoRef, stream }) => {
     const [cursor, setCursor] = useState<"grab" | "grabbing">("grab");
-
-    const [dimensions, setDimensions] = useState({
-        width: 200,
-        height: 200,
-        borderRadius: 100,
-    });
+    const mobile = useMediaQuery((theme: MyTheme) => theme.breakpoints.down('sm'))
+    
+    const leftPosition = () => {
+        if(!mobile) return 50
+        
+        if(typeof window === 'undefined') {
+            return 50 
+        }else {
+            return window.innerWidth / 2 - 50
+        }
+    }
+ 
+    const bottomPosition = () => {
+        if(!mobile) return 50
+        
+        if(typeof window === 'undefined') {
+            return 50 
+        }else {
+            return window.innerHeight / 2 - 50
+        }
+    }
 
     return (
         <Draggable
@@ -28,13 +46,13 @@ const MyVideo: React.FC<MyVideoProps> = ({ myVideoRef, stream }) => {
         >
             <Box
                 sx={{
-                    width: dimensions.width,
-                    height: dimensions.height,
+                    width:  mobile ? 100 : 200,
+                    height: mobile ? 100 : 200,
                     position: "absolute",
-                    left: 50,
-                    bottom: 50,
+                    left: leftPosition(),
+                    bottom: bottomPosition(),
                     backgroundColor: "gray",
-                    borderRadius: dimensions.borderRadius,
+                    borderRadius: mobile ? 50 : 100,
                     overflow: "hidden",
                     cursor,
                     display: "flex",
@@ -48,7 +66,7 @@ const MyVideo: React.FC<MyVideoProps> = ({ myVideoRef, stream }) => {
                         playsInline
                         autoPlay
                         muted
-                        height={200}
+                        height={mobile ? 100 :  200}
                     />
                 )}
             </Box>

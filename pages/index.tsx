@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Image from 'next/image'
 
 import {
     Paper,
@@ -76,9 +77,16 @@ export default function Home() {
                 }}
             >
                 <Paper
-                    sx={{ p: 2, borderRadius: 3, minWidth: "70%" }}
+                    sx={{ p: 2, borderRadius: 3, minWidth: "70%", mx: 2 }}
                     elevation={5}
                 >
+                    <Box sx={{display: 'flex', pb: 3, justifyContent: 'center'}}>
+                        <Image 
+                            src={'/chat-icon.svg'}
+                            width={100}
+                            height={100}
+                        />
+                    </Box>
                     <Grid container spacing={2}>
                         <Grid item xs={12} md={6}>
                             <TextField
@@ -106,6 +114,7 @@ export default function Home() {
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <TextField
+                                required
                                 fullWidth
                                 value={idToCall}
                                 onChange={(e) => setIdToCall(e.target.value)}
@@ -115,6 +124,7 @@ export default function Home() {
                             />
 
                             <Fab
+                                disabled={idToCall.trim() === ''}
                                 variant="extended"
                                 size="medium"
                                 color="primary"
