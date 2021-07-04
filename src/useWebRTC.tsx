@@ -16,6 +16,7 @@ export const useWebRTC = () => {
     const [me, setMe] = useState("");
     const [stream, setStream] = useState<MediaStream>();
     const [receivingCall, setReceivingCall] = useState(false);
+    const [callReciever, setCallReciever] = useState(false) 
     const [caller, setCaller] = useState(null);
     const [callerSignal, setCallerSignal] = useState();
     const [callAccepted, setCallAccepted] = useState(false);
@@ -34,7 +35,6 @@ export const useWebRTC = () => {
     const recieveCallSound = useRef<HTMLAudioElement>(null)
 
     useEffect(() => {
-
         messageSound.current = new Audio('/message.wav')
         callSound.current = new Audio('/make-call.wav')
         recieveCallSound.current = new Audio('/recieving-call.wav')
@@ -51,7 +51,7 @@ export const useWebRTC = () => {
 
     useEffect(() => {
 
-        socket.current = io("http://localhost:3000");
+        socket.current = io("http://192.168.1.17:3000");
         navigator.mediaDevices
             .getUserMedia({ video:{
                 width: { min: 640, ideal: 1920, max: 1920 },
@@ -73,6 +73,7 @@ export const useWebRTC = () => {
 
         socket.current.on("user.calling", (data) => {
             setReceivingCall(true);
+            setCallReciever(true)
             setCaller(data.from);
             setCallerSignal(data.signal);
             if(recieveCallSound.current) {
@@ -82,6 +83,9 @@ export const useWebRTC = () => {
     }, []);
 
     function callPeer(id: string) {
+        if(callSound.current) {
+            callSound.current.play()
+        }
         callerPeer.current = new Peer({
             initiator: true,
             trickle: false,
@@ -106,11 +110,8 @@ export const useWebRTC = () => {
             socket.current.emit("call.user", {
                 user_to_call: id,
                 signal: data,
-                from: { socket_id: me, name },
+                from: { socket_id: me.toString(), name },
             });
-            if(callSound.current) {
-                callSound.current.play()
-            }
         });
 
         callerPeer.current.on("stream", (stream) => {
@@ -138,15 +139,17 @@ export const useWebRTC = () => {
 
     function acceptCall() {
         setCallAccepted(true);
+        setReceivingCall(false)
         answerPeer.current = new Peer({
             initiator: false,
             trickle: false,
             stream: stream,
         });
         answerPeer.current.on("signal", (data) => {
+            console.log(caller)
             socket.current.emit("answer.call", {
                 signal: data,
-                to: caller.socket_id,
+                to: caller.socket_id.toString(),
             });
         });
 
@@ -170,8 +173,16 @@ export const useWebRTC = () => {
         answerPeer.current.signal(callerSignal);
     }
 
+
+    function rejectCall() {
+        socket.current.emit('reject.call', {
+            from: me,
+            to: caller.socket_id
+        })
+    }
+
     function sendMessage(message: string) {
-        if (receivingCall) {
+        if (callReciever) {
             answerPeer.current.send(message);
             setMessages((prev) => [
                 ...prev,
@@ -202,5 +213,6 @@ export const useWebRTC = () => {
         sendMessage,
         showChat,
         messages,
+        rejectCall
     };
 };

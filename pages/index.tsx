@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { makeStyles } from "@material-ui/styles";
 import { Paper, TextField, Typography, Grid, Box } from "@material-ui/core";
@@ -9,10 +9,12 @@ import AssignmentIcon from "@material-ui/icons/Assignment";
 import CallIcon from "@material-ui/icons/Call";
 import VideoChat from "../src/components/video-chat/VideoChat";
 import { useWebRTC } from "../src/useWebRTC";
+import AcceptCallDialog from "../src/components/AcceptCallDialog";
 
 export default function Home() {
     const [idToCall, setIdToCall] = useState("");
     const [message, setMessage] = useState("");
+    const [open, setOpen] = useState(false)
     const {
         name,
         setName,
@@ -27,7 +29,15 @@ export default function Home() {
         caller,
         sendMessage,
         messages,
+        rejectCall
     } = useWebRTC();
+
+
+    useEffect(() => {
+        if(receivingCall) {
+            setOpen(true)
+        }
+    }, [receivingCall])
 
     return (
         <Box
@@ -44,7 +54,7 @@ export default function Home() {
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
-                    
+                    minHeight: '100vh'
                 }}
             >
                 <Paper
@@ -63,7 +73,7 @@ export default function Home() {
                             />
                             <CopyToClipboard text={me || " "}>
                                 <Button
-                                    title="Copy Your ID"
+                                    title={me !== '' ? `Your ID is ${me}` : "Copy Your ID"}
                                     right_icon={
                                         <AssignmentIcon sx={{ ml: 2 }} />
                                     }
@@ -90,31 +100,18 @@ export default function Home() {
                         </Grid>
                         
                     </Grid>
-                    {receivingCall && caller && !callAccepted && (
-                        <>
-                            <Typography>
-                                {caller.name} is Calling .....
-                            </Typography>
-                            <Button
-                                title="Accept"
-                                right_icon={<CallIcon sx={{ ml: 2 }} />}
-                                onClick={() => {
-                                    acceptCall();
-                                }}
-                            />
-                        </>
-                    )}
-                    {callAccepted && stream && (
-                        <Box sx={{ display: "flex", justifyContent: "center" }}>
-                            <Button
-                                title="Accept"
-                                right_icon={<CallIcon sx={{ ml: 2 }} />}
-                                onClick={() => {
-                                    acceptCall();
-                                }}
-                            />
-                        </Box>
-                    )}
+                    <AcceptCallDialog
+                        open={open}
+                        handleClose={() => setOpen(false)}
+                        onAccept={() =>{ 
+                            acceptCall()
+                            setOpen(false)
+                        }}
+                        onReject={() => {
+                            rejectCall()
+                            setOpen(false)
+                        }}
+                    />
                 </Paper>
             </Box>
 
