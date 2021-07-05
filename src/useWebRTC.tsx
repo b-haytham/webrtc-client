@@ -58,7 +58,7 @@ export const useWebRTC = () => {
     }, [callAccepted]);
 
     useEffect(() => {
-        socket.current = io("http://192.168.1.17:3000");
+        socket.current = io(process.env.NEXT_PUBLIC_SOCKET_IO_SERVER);
         navigator.mediaDevices
             .getUserMedia({
                 video: {
