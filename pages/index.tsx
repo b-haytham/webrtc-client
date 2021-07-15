@@ -7,6 +7,7 @@ import {
     Grid,
     Box,
     Fab,
+    CircularProgress,
 } from "@material-ui/core";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 
@@ -77,9 +78,14 @@ export default function Home() {
                 }}
             >
                 <Paper
-                    sx={{ p: 2, borderRadius: 3, minWidth: "70%", mx: 2 }}
+                    sx={{ position: 'relative' ,p: 2, borderRadius: 3, minWidth: "70%", mx: 2 }}
                     elevation={5}
                 >
+                    {!me && <Box
+                        sx={{position: "absolute", top: 20, right: 20}}
+                    >
+                        <CircularProgress size={30} />
+                    </Box>}
                     <Box sx={{display: 'flex', pb: 3, justifyContent: 'center'}}>
                         <Image 
                             src={'/chat-icon.svg'}
@@ -99,6 +105,7 @@ export default function Home() {
                             />
                             <CopyToClipboard text={me || " "}>
                                 <Fab
+                                    disabled={me === ""}
                                     variant="extended"
                                     size="medium"
                                     color="primary"
